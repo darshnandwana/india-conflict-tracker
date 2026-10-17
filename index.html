@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>India Conflict Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9eef1;--panel:#fff;--ink:#0f1e2e;--mute:#5b6b7a;--line:#cdd7de;--sea:#dbe6ec;--hot:#b3123f;--c2:#1d4ed8;--c3:#0f766e;--c4:#a16207;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c141c;--panel:#142130;--ink:#e8eef3;--mute:#93a4b3;--line:#27384a;--sea:#10202e;--hot:#ff5c84;--c2:#7aa2ff;--c3:#4fd1c0;--c4:#f2c14e}}
+:root[data-theme="dark"]{--bg:#0c141c;--panel:#142130;--ink:#e8eef3;--mute:#93a4b3;--line:#27384a;--sea:#10202e;--hot:#ff5c84;--c2:#7aa2ff;--c3:#4fd1c0;--c4:#f2c14e}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header{padding:28px 20px 8px;max-width:1200px;margin:0 auto}
+h1{font:800 clamp(30px,5vw,48px)/1.05 Fraunces,Georgia,serif;margin:0 0 6px;letter-spacing:-.02em}
+header p{margin:0;color:var(--mute);max-width:60ch}
+.note{margin:14px 0 0;padding:8px 12px;border-left:3px solid var(--c4);background:var(--panel);font-size:13px;color:var(--mute)}
+main{max-width:1200px;margin:0 auto;padding:12px 20px 40px}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin:10px 0 16px}
+.stat b{display:block;font:800 30px/1 Fraunces,Georgia,serif}
+.stat span{font-size:13px;color:var(--mute)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:40px}
+input{flex:1;min-width:160px}
+button.reset{font:inherit;color:var(--ink);background:none;border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}
+:focus-visible{outline:2px solid var(--c2);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-height:520px;overflow:auto}
+.ev{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;color:inherit;font:inherit;cursor:pointer}
+.ev:last-child{border-bottom:0}
+.ev[aria-pressed=true]{background:var(--sea)}
+.ev h3{margin:0 0 2px;font-size:15px;font-weight:600}
+.ev small{color:var(--mute)}
+.tag{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.detail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.detail h2{font:600 22px/1.2 Fraunces,Georgia,serif;margin:0 0 6px}
+.empty{padding:20px;color:var(--mute)}
+footer{max-width:1200px;margin:0 auto;padding:0 20px 30px;color:var(--mute);font-size:13px}
+.about{max-width:1200px;margin:0 auto;padding:8px 20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
+@media(max-width:860px){.about{grid-template-columns:1fr}}
+.about h2{font:600 24px/1.2 Fraunces,Georgia,serif;margin:0 0 8px}
+.about p,.about li{max-width:65ch;color:var(--ink)}
+.about ul{padding-left:18px;margin:0}
+.about li{margin-bottom:6px}
+.mapwrap{background:var(--sea);border:1px solid var(--line);border-radius:10px;padding:8px}
+.mapwrap svg{display:block;width:100%;height:auto;max-height:640px;margin:0 auto}
+.land{fill:var(--panel);stroke:var(--mute);stroke-width:.9;stroke-linejoin:round}
+.dot{cursor:pointer}
+.lbl{font:600 12px "IBM Plex Sans",sans-serif;fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 1.8s ease-out infinite;pointer-events:none}
+@keyframes pulse{from{transform:scale(1);opacity:.7}to{transform:scale(2.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none;opacity:.35}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 6px 2px;font-size:12px;color:var(--mute)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>India Conflict Tracker</h1>
+  <p>Reported security incidents across India, mapped and filterable by region, type, and severity.</p>
+  <p class="note">Compiled from news and government sources, linked in each incident. Locations are approximate (district level). Figures are as first reported and may be revised. This is a growing selection, not a complete record.</p>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search incidents" aria-label="Search incidents">
+    <select id="region" aria-label="Region"></select>
+    <select id="type" aria-label="Incident type"></select>
+    <select id="sev" aria-label="Minimum severity">
+      <option value="1">Any severity</option>
+      <option value="2">Severity 2+</option>
+      <option value="3">Severity 3+</option>
+      <option value="4">Severity 4+</option>
+    </select>
+    <button class="reset" id="reset">Clear filters</button>
+  </div>
+
+  <div class="grid">
+    <div class="mapwrap">
+      <svg id="map" viewBox="0 0 580 640" role="img" aria-label="Map of India with incident locations. The list beside it has the same incidents."></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <div class="detail" id="detail"><span class="empty">Select an incident on the map or list to see details.</span></div>
+</main>
+
+<section class="about">
+  <div>
+    <h2>Why India, and why this tracker</h2>
+    <p>Global conflict trackers show India as a few dots among thousands. That hides how different its conflicts are: a border and militancy situation in Jammu &amp; Kashmir, insurgent and ethnic violence in the North East, and a long-running Maoist conflict across central and eastern forest belts.</p>
+    <p>This tracker looks only at India, so each region can be read on its own terms. It lets students, journalists and researchers see where incidents cluster, what kind they are, and how that changes over time.</p>
+    <p>Built by [Your name], [Class, School], as part of my application to Ashoka University.</p>
+  </div>
+  <div>
+    <h2>Data sources and method</h2>
+    <ul>
+      <li><b>Sources:</b> All India Radio News, Business Standard, EastMojo, Al Jazeera, Eurasia Review (which draws on SATP data), and Terrorism Watch. Each incident links to its source.</li>
+      <li><b>Severity (1 to 5):</b> based on reported deaths. 0-1 deaths is 1 to 2, 2 to 5 is 3, 6 to 10 is 4, more than 10 is 5. When sources give different tolls, the lower figure is used.</li>
+      <li><b>Limits:</b> reports can be late, disputed or incomplete, and locations are approximate, often to district level.</li>
+      <li><b>Map:</b> national and state outlines based on Survey of India data via DataMeet, simplified for the web.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Larger dots mean higher severity; pulsing dots are severity 4 or 5.</footer>
+
+<script>
+// India outline (Survey of India based, via DataMeet), simplified. Flat [lon,lat,lon,lat,...] rings.
+var INDIA_RINGS=[[93.85,7.24,93.83,6.76,93.66,7.13,93.85,7.24],[92.52,10.9,92.57,10.58,92.39,10.53,92.52,10.9],[92.7,12.24,92.71,11.48,92.51,11.85,92.7,12.24],[92.83,12.3,92.76,12.06,92.83,12.3],[92.9,12.92,92.97,12.5,92.72,12.3,92.72,12.83,92.9,12.92],[93.03,13.57,93.03,13.08,92.84,12.88,92.84,13.4,93.03,13.57],[84.68,19.17,84.55,18.78,83.99,18.36,84.12,18.3,82.31,17.03,82.31,16.55,81.71,16.3,81.31,16.36,81.01,15.76,80.5,15.86,80.14,15.56,80.03,15.21,80.24,13.47,80.01,13.54,79.76,13.21,79.41,13.33,79.16,13.02,78.71,13.07,78.38,12.62,78.2,12.69,78.25,12.86,78.47,12.86,78.59,13.27,78.38,13.33,78.4,13.59,78.09,13.64,78.11,13.86,77.83,13.94,77.46,13.68,77.18,13.92,77.0,13.75,76.9,14.17,77.4,13.89,77.35,14.13,77.52,14.18,77.4,14.34,77.4,14.2,77.29,14.34,76.95,14.24,76.98,14.48,76.77,14.6,76.78,15.08,77.16,15.13,76.97,15.5,77.08,15.91,78.12,15.83,78.41,16.09,78.78,16.03,79.23,16.25,79.27,16.57,79.97,16.65,80.19,17.05,80.57,16.77,80.38,17.06,80.84,17.03,81.42,17.37,81.81,17.94,82.34,18.06,82.48,18.54,82.64,18.24,82.81,18.45,83.06,18.39,83.06,18.62,83.42,18.86,83.31,19.0,83.63,19.16,84.09,18.75,84.68,19.17],[96.16,29.38,96.4,29.25,96.12,29.07,96.17,28.9,96.53,29.08,96.62,28.77,96.27,28.41,96.67,28.46,97.4,28.19,97.39,27.89,96.9,27.61,97.14,27.09,96.62,27.36,95.24,26.68,95.2,27.04,96.02,27.36,95.76,27.73,95.98,27.96,94.46,27.55,94.25,27.64,93.83,27.07,93.49,26.94,92.66,27.04,92.11,26.89,92.02,27.48,91.57,27.58,91.56,27.86,91.92,27.71,92.57,27.82,92.69,28.13,93.22,28.33,93.34,28.64,93.93,28.67,94.63,29.35,95.41,29.03,95.78,29.35,96.16,29.38],[95.97,27.95,95.76,27.73,96.02,27.36,95.51,27.26,94.28,26.55,93.98,25.92,93.8,25.81,93.77,25.96,93.33,25.54,93.47,25.31,93.04,24.41,92.76,24.52,92.47,24.13,92.21,24.25,92.24,24.9,92.5,24.87,92.48,25.11,92.8,25.22,92.57,25.47,92.65,25.59,92.16,25.67,92.3,26.08,91.82,26.12,91.23,25.72,90.95,25.95,90.12,25.96,89.86,25.48,89.89,25.94,89.7,26.19,89.87,26.74,90.41,26.9,91.69,26.8,92.66,27.04,93.66,26.96,94.25,27.64,95.97,27.95],[84.12,27.51,84.63,27.34,84.65,27.05,85.21,26.76,85.64,26.87,85.85,26.57,86.35,26.62,86.74,26.42,87.07,26.59,87.34,26.35,87.89,26.49,88.02,26.35,88.24,26.55,88.29,26.34,87.81,25.92,88.08,25.48,87.79,25.45,87.84,25.2,87.59,25.35,87.33,25.22,87.06,24.61,86.61,24.61,86.46,24.37,86.06,24.78,85.74,24.82,85.67,24.58,85.1,24.38,84.8,24.53,84.5,24.29,84.3,24.57,83.51,24.53,83.36,25.2,84.1,25.72,84.64,25.73,84.06,26.1,84.18,26.37,83.91,26.45,84.09,26.64,84.42,26.62,83.84,27.32,84.12,27.51],[83.34,24.1,83.78,23.6,84.01,23.63,84.04,23.14,84.38,22.88,84.01,22.37,83.63,22.2,83.2,21.14,82.64,21.15,82.47,20.83,82.35,20.89,82.4,20.06,82.72,19.85,81.88,20.05,82.25,18.92,81.54,18.27,81.39,17.81,81.05,17.79,80.98,18.17,80.74,18.18,80.73,18.41,80.25,18.76,80.39,19.24,80.9,19.47,80.4,19.8,80.55,20.07,80.39,20.24,80.62,20.34,80.46,21.17,80.68,21.3,81.12,22.44,81.62,22.54,82.16,23.14,82.19,23.32,81.92,23.53,81.61,23.51,81.62,23.9,82.52,23.78,82.81,23.96,83.14,23.89,83.34,24.1],[73.21,20.12,73.04,20.07,72.91,20.27,73.1,20.36,73.21,20.12],[73.87,15.78,73.99,15.61,74.25,15.66,74.21,14.92,74.04,14.92,73.78,15.41,73.94,15.43,73.68,15.73,73.87,15.78],[68.36,23.81,68.2,23.6,68.36,23.81],[68.36,23.98,68.24,23.68,68.36,23.98],[72.66,21.47,72.84,21.67,72.52,21.68,72.55,22.15,72.92,22.27,72.49,22.2,72.38,22.39,72.28,21.93,72.3,22.11,72.15,21.98,72.31,21.63,72.11,21.2,71.07,20.74,70.44,20.85,68.94,22.31,69.07,22.48,69.23,22.26,70.16,22.55,70.49,23.08,69.71,22.73,69.19,22.84,68.59,23.22,68.69,23.31,68.49,23.64,68.76,23.88,68.53,23.76,68.66,23.92,68.55,23.97,68.75,23.97,68.82,24.32,70.02,24.17,70.57,24.42,70.58,24.25,70.83,24.23,71.12,24.41,70.99,24.55,71.1,24.69,72.05,24.71,72.92,24.33,73.09,24.49,73.23,24.36,73.08,24.18,73.24,24.01,73.37,24.13,73.36,23.79,73.66,23.62,73.63,23.45,74.1,23.29,74.46,22.91,74.38,22.64,74.04,22.54,74.29,22.39,74.07,22.36,74.14,21.96,73.8,21.82,73.78,21.62,74.33,21.52,73.58,21.17,73.9,20.98,73.94,20.74,73.66,20.56,73.45,20.71,73.42,20.21,73.21,20.12,73.1,20.36,72.73,20.14,72.9,20.41,72.66,21.47],[76.85,30.88,77.22,30.48,77.61,30.37,77.13,29.77,77.23,28.9,76.84,28.58,77.48,28.41,77.55,27.94,76.98,27.65,76.87,28.22,76.55,27.97,76.3,28.18,76.23,27.84,75.97,27.86,76.1,28.15,75.56,28.61,75.41,29.26,74.6,29.33,74.61,29.75,74.47,29.79,74.53,29.95,75.1,29.91,75.23,29.54,75.45,29.81,76.05,29.75,76.25,29.87,76.22,30.16,76.55,30.08,76.74,30.42,76.94,30.39,76.85,30.88],[76.8,33.25,77.35,32.82,77.73,32.97,78.0,32.58,78.39,32.76,78.3,32.5,78.79,32.0,78.72,31.51,79.01,31.11,78.37,31.29,77.9,31.15,77.7,30.76,77.82,30.53,77.58,30.38,77.14,30.54,76.38,31.44,76.19,31.3,75.91,31.95,75.59,32.08,75.95,32.42,75.8,32.89,76.8,33.25],[74.73,37.02,74.92,36.91,75.34,37.05,75.77,36.57,76.64,36.18,76.81,35.84,77.36,35.72,77.44,35.46,77.98,35.46,77.95,35.61,79.38,36.0,80.29,35.61,80.07,34.71,79.51,34.47,79.43,34.02,78.91,33.98,79.11,33.62,78.91,33.63,78.99,33.33,79.45,33.26,79.33,33.01,79.63,32.74,79.45,32.53,78.98,32.34,78.76,32.7,78.33,32.47,78.39,32.76,78.0,32.58,77.73,32.97,77.35,32.82,76.8,33.25,75.82,32.93,75.94,32.64,75.51,32.28,74.69,32.48,74.7,32.84,74.37,32.76,73.63,33.09,73.39,34.38,74.13,35.11,73.72,35.23,73.78,35.53,73.27,35.63,73.1,35.88,72.6,35.87,72.55,36.18,73.09,36.7,73.88,36.7,73.69,36.91,74.06,36.81,74.73,37.02],[87.61,25.32,87.98,24.9,87.69,24.15,87.24,24.04,87.25,23.83,86.8,23.83,86.31,23.42,86.05,23.59,85.87,23.45,85.92,23.13,86.55,22.99,86.42,22.78,86.89,22.26,86.04,22.57,85.91,21.97,85.4,22.16,85.24,22.0,84.99,22.09,85.07,22.48,84.3,22.34,84.01,22.52,84.4,22.94,84.04,23.14,84.01,23.63,83.78,23.6,83.33,24.1,83.4,24.5,84.0,24.64,84.5,24.29,84.8,24.53,85.1,24.38,85.67,24.58,85.74,24.82,86.06,24.78,86.46,24.37,86.61,24.61,87.06,24.61,87.18,25.06,87.61,25.32],[77.34,18.44,77.61,18.28,77.66,17.97,77.44,17.58,77.69,17.5,77.38,17.22,77.47,16.59,77.24,16.47,77.6,16.29,77.51,15.93,77.03,15.84,77.13,15.66,76.97,15.5,77.17,15.17,77.08,15.01,76.78,15.08,76.77,14.6,76.98,14.48,76.95,14.24,77.51,14.27,77.4,13.89,76.9,14.17,77.0,13.75,77.18,13.92,77.48,13.69,77.99,13.96,78.09,13.64,78.4,13.59,78.38,13.33,78.59,13.27,78.47,12.86,77.84,12.87,77.6,12.67,77.48,12.21,77.74,12.18,77.68,11.95,77.43,11.76,76.91,11.79,76.85,11.58,75.87,11.95,75.42,12.29,75.33,12.59,74.86,12.76,74.76,13.64,74.31,14.52,74.43,14.62,74.09,14.8,74.34,15.3,74.25,15.66,74.09,15.67,74.36,15.78,74.49,16.1,74.27,16.55,74.69,16.61,74.93,16.94,75.67,16.96,75.63,17.48,76.38,17.31,76.33,17.6,76.69,17.68,76.96,18.19,77.34,18.44],[75.0,12.79,75.58,12.16,76.42,11.76,76.25,11.47,76.55,11.36,76.46,11.19,76.74,11.22,76.66,10.93,76.91,10.78,76.83,10.3,77.24,10.35,77.17,9.61,77.41,9.51,77.15,9.02,77.18,8.32,76.55,8.9,75.82,11.17,75.2,12.0,74.86,12.76,75.0,12.79],[78.37,26.86,79.0,26.68,79.14,26.34,78.81,25.62,78.3,25.37,78.45,25.12,78.17,24.85,78.39,24.27,78.51,24.39,78.8,24.18,78.97,24.35,78.43,25.28,78.89,25.56,78.88,25.16,79.01,25.27,79.28,25.12,79.31,25.33,79.5,25.27,79.41,25.11,79.86,25.09,80.26,25.42,80.43,25.17,80.32,25.0,80.89,25.19,80.81,24.94,81.14,24.89,81.28,25.16,81.57,25.19,82.3,24.61,82.8,24.6,82.67,24.13,82.82,23.96,82.64,23.84,81.6,23.89,81.61,23.51,81.92,23.53,82.19,23.32,82.16,23.14,81.62,22.54,81.12,22.44,80.67,21.34,80.27,21.62,79.54,21.54,79.23,21.72,78.94,21.49,78.38,21.62,77.59,21.36,77.42,21.53,77.61,21.54,77.55,21.7,77.29,21.76,76.8,21.6,76.62,21.19,76.17,21.08,76.1,21.37,75.22,21.41,74.56,21.68,74.44,22.02,74.14,21.95,74.07,22.36,74.29,22.39,74.04,22.54,74.38,22.64,74.48,22.86,74.32,23.06,74.74,23.21,74.52,23.33,74.94,23.63,74.99,24.03,74.71,24.51,74.8,24.79,74.89,24.65,75.02,24.77,74.83,24.96,75.05,24.86,75.35,25.04,75.26,24.89,75.42,24.86,75.21,24.91,75.22,24.72,75.84,24.73,75.84,24.07,75.52,24.05,75.58,23.8,75.98,23.93,76.19,24.33,76.9,24.13,76.82,24.53,77.07,24.57,76.81,24.82,76.95,24.87,76.86,25.01,77.4,25.11,77.37,25.41,76.78,25.31,76.49,25.71,78.37,26.86],[74.45,22.01,74.59,21.66,75.3,21.39,76.1,21.37,76.28,21.07,76.62,21.19,76.8,21.6,77.29,21.76,77.55,21.7,77.61,21.54,77.42,21.53,77.59,21.36,78.38,21.62,78.94,21.49,79.23,21.72,79.54,21.54,80.27,21.62,80.68,21.31,80.44,21.1,80.62,20.34,80.39,20.24,80.55,20.07,80.4,19.8,80.9,19.47,80.76,19.29,80.48,19.34,80.35,18.82,80.12,18.68,79.9,18.83,79.98,19.4,79.79,19.6,79.25,19.61,79.18,19.46,78.31,19.91,78.31,19.46,78.17,19.24,77.86,19.3,77.76,19.03,77.95,18.82,77.57,18.31,77.32,18.46,76.96,18.19,76.69,17.68,76.33,17.6,76.38,17.31,75.63,17.48,75.67,16.96,74.93,16.94,74.69,16.61,74.26,16.54,74.51,16.2,74.36,15.78,74.02,15.61,73.86,15.8,73.68,15.73,73.31,16.53,72.65,19.94,72.77,19.9,72.86,20.23,73.17,20.05,73.42,20.2,73.45,20.71,73.66,20.56,73.94,20.74,73.9,20.98,73.58,21.17,74.33,21.54,73.86,21.49,73.8,21.82,74.45,22.01],[94.58,25.64,94.74,25.02,94.16,23.85,92.98,24.11,93.4,25.26,93.61,25.2,93.84,25.56,94.31,25.49,94.58,25.64],[91.86,26.1,92.3,26.07,92.16,25.67,92.66,25.58,92.57,25.47,92.8,25.22,92.46,25.03,89.84,25.3,90.12,25.96,90.95,25.95,91.23,25.72,91.86,26.1],[92.8,24.42,93.02,24.39,92.98,24.11,93.34,24.05,93.44,23.68,93.39,23.13,93.13,23.04,93.21,22.26,92.91,21.94,92.72,22.15,92.61,21.98,92.26,23.81,92.3,24.25,92.47,24.13,92.8,24.42],[95.21,26.93,95.07,26.45,95.18,26.07,94.9,25.56,94.63,25.46,94.57,25.69,94.31,25.49,93.84,25.56,93.5,25.24,93.33,25.54,93.77,25.96,93.8,25.81,93.98,25.92,94.28,26.55,94.93,26.95,95.21,26.93],[77.09,28.87,77.33,28.71,77.22,28.41,76.85,28.55,77.09,28.87],[75.88,32.49,75.59,32.08,75.91,31.95,76.19,31.3,76.38,31.44,76.64,31.22,76.94,30.38,76.74,30.42,76.55,30.08,76.22,30.16,76.25,29.87,76.05,29.75,75.45,29.81,75.23,29.54,75.1,29.91,73.9,29.97,73.94,30.49,74.71,31.1,74.52,31.14,74.61,31.89,75.88,32.49],[73.9,29.98,74.53,29.94,74.6,29.33,75.41,29.26,75.56,28.61,76.1,28.15,75.97,27.86,76.23,27.84,76.3,28.18,76.55,27.97,76.91,28.2,76.91,27.65,77.3,27.79,77.68,27.19,77.51,27.09,77.76,27.02,77.46,26.74,77.76,26.93,78.27,26.92,76.49,25.71,76.78,25.31,77.37,25.41,77.4,25.11,76.86,25.01,76.95,24.87,76.81,24.82,77.07,24.57,76.82,24.53,76.9,24.13,76.19,24.33,75.98,23.93,75.58,23.8,75.52,24.05,75.84,24.07,75.84,24.73,75.22,24.72,75.21,24.91,75.42,24.86,75.26,24.89,75.35,25.04,75.05,24.86,74.85,24.97,75.02,24.75,74.8,24.79,74.71,24.51,74.99,24.03,74.94,23.63,74.52,23.33,74.74,23.21,74.32,23.06,73.63,23.45,73.66,23.62,73.36,23.79,73.37,24.13,73.24,24.01,73.08,24.18,73.23,24.36,73.09,24.49,72.92,24.33,72.05,24.71,71.11,24.67,70.66,25.71,70.28,25.71,70.1,25.94,70.17,26.55,69.48,26.81,69.59,27.18,70.37,28.01,70.88,27.71,71.9,27.96,72.39,28.77,72.95,29.03,73.4,29.94,73.98,30.2,73.9,29.98],[88.65,28.1,88.89,27.89,88.77,27.56,88.91,27.28,88.1,27.14,88.13,27.95,88.65,28.1],[79.7,11.88,79.88,10.29,79.3,10.26,78.89,9.48,79.19,9.28,78.21,9.05,78.07,8.37,77.32,8.12,77.1,8.29,77.28,8.55,77.15,9.02,77.41,9.51,77.17,9.61,77.29,10.22,76.83,10.3,76.91,10.78,76.66,10.93,76.74,11.22,76.46,11.19,76.55,11.36,76.23,11.57,76.51,11.71,76.85,11.58,76.91,11.79,77.43,11.76,77.68,11.95,77.78,12.12,77.47,12.25,77.84,12.87,78.47,12.62,78.71,13.07,79.16,13.02,79.44,13.34,79.76,13.21,80.02,13.55,80.33,13.44,80.25,12.77,79.7,11.88],[78.34,19.88,79.18,19.46,79.25,19.61,79.79,19.6,79.98,19.4,79.92,18.81,80.64,18.52,80.74,18.18,80.98,18.17,81.04,17.8,81.8,17.85,81.44,17.38,80.84,17.03,80.38,17.07,80.57,16.77,80.19,17.05,79.97,16.65,79.27,16.57,79.23,16.25,78.78,16.03,77.66,15.88,77.5,16.04,77.6,16.34,77.24,16.47,77.47,16.59,77.38,17.22,77.69,17.49,77.44,17.58,77.66,17.97,77.53,18.43,77.95,18.82,77.76,19.03,77.86,19.3,78.17,19.24,78.31,19.46,78.34,19.88],[92.22,24.5,92.27,23.72,91.96,23.73,91.84,23.1,91.62,22.94,91.45,23.26,91.36,23.1,91.15,23.73,91.38,24.1,91.91,24.14,92.22,24.5],[77.6,30.4,77.94,30.24,77.71,29.87,78.0,29.54,78.43,29.77,78.94,29.45,78.73,29.31,79.42,28.85,79.79,28.89,79.98,28.71,80.12,28.83,80.52,28.56,80.57,28.69,81.89,27.86,82.71,27.73,82.74,27.5,83.93,27.32,84.06,26.89,84.42,26.62,83.91,26.52,84.18,26.37,84.01,26.18,84.64,25.73,84.1,25.72,83.34,25.18,83.55,24.62,83.2,23.92,82.95,23.88,82.67,24.12,82.77,24.64,82.3,24.61,81.57,25.19,81.28,25.16,81.14,24.89,80.81,24.94,80.89,25.19,80.29,25.02,80.43,25.17,80.26,25.42,79.86,25.09,79.41,25.11,79.5,25.27,79.3,25.34,79.31,25.13,79.14,25.11,79.01,25.27,78.88,25.16,78.96,25.34,78.79,25.29,78.99,25.37,78.94,25.55,78.43,25.28,78.97,24.35,78.8,24.18,78.51,24.39,78.35,24.3,78.17,24.85,78.45,25.12,78.3,25.37,78.81,25.62,79.14,26.44,79.0,26.68,78.22,26.95,77.44,26.76,77.76,27.02,77.52,27.06,77.68,27.19,77.32,27.61,77.55,28.24,77.2,28.8,77.1,29.6,77.6,30.4],[79.21,31.35,79.43,31.03,79.87,30.97,80.24,30.76,80.23,30.57,81.03,30.25,80.37,29.75,80.0,28.71,78.91,29.14,78.73,29.31,78.94,29.45,78.49,29.74,78.0,29.54,77.71,29.87,77.94,30.24,77.58,30.41,77.82,30.53,77.7,30.76,77.9,31.15,78.37,31.29,78.96,31.1,79.06,31.46,79.21,31.35],[88.14,21.88,88.11,21.63,88.14,21.88],[88.09,27.16,88.88,27.11,89.14,26.81,89.86,26.7,89.87,26.45,89.55,25.97,89.16,26.14,89.09,26.4,88.92,26.4,89.05,26.24,88.68,26.27,88.38,26.59,88.53,26.36,88.18,26.15,88.11,25.8,89.01,25.27,88.44,25.21,88.4,24.94,88.14,24.93,88.01,24.66,88.74,24.27,88.57,23.64,88.8,23.5,88.72,23.26,89.0,23.21,88.85,23.01,88.96,22.61,88.85,22.43,88.67,22.55,88.95,22.23,88.64,22.21,88.67,22.34,88.61,21.91,88.38,21.97,88.27,21.73,88.2,22.17,87.88,22.44,88.19,22.1,87.96,22.1,87.96,21.83,87.49,21.6,87.24,21.96,87.03,21.87,87.02,22.05,86.72,22.15,86.89,22.3,86.42,22.78,86.55,22.99,85.83,23.27,86.04,23.59,86.31,23.42,86.8,23.83,87.25,23.83,87.24,24.04,87.7,24.16,87.98,24.9,87.77,25.41,88.08,25.5,87.81,25.92,88.3,26.35,88.11,26.55,88.09,27.16],[86.08,22.53,87.47,21.73,86.87,21.22,86.98,20.82,86.79,20.75,87.06,20.72,86.73,20.48,86.78,20.33,86.38,19.95,84.42,19.02,84.32,18.79,83.89,18.81,83.63,19.16,83.31,19.0,83.42,18.86,83.06,18.62,83.06,18.38,82.81,18.45,82.64,18.24,82.48,18.54,82.28,17.99,81.39,17.81,81.54,18.27,82.25,18.92,81.87,20.04,82.71,19.84,82.72,20.0,82.4,20.06,82.35,20.89,82.47,20.83,82.64,21.15,83.13,21.1,83.41,21.35,83.63,22.21,84.01,22.37,84.0,22.53,84.3,22.34,85.07,22.48,84.99,22.08,85.81,22.11,85.91,21.97,86.08,22.53]];
+</script>
+<script>
+// Add or edit incidents here. severity: 1 (low) to 5 (high)
+var EVENTS=[
+{id:1,date:"2026-10-10",region:"North East",place:"Kamjong (Chassad), Manipur",lat:25.18,lon:94.45,type:"Insurgent violence",sev:3,title:"Ambush on IRB personnel, then woman shot dead; wider Kuki-Naga violence began",src:"Business Standard",url:"https://www.business-standard.com/amp/india-news/situation-remains-tense-in-manipur-as-toll-rises-to-9-cm-calls-for-peace-126101100131_1.html"},
+{id:2,date:"2026-10-10",region:"North East",place:"Kangpokpi, Manipur",lat:25.15,lon:93.97,type:"Insurgent violence",sev:3,title:"Four villagers killed in pre-dawn attack. Overall toll reported as 9 to 11",src:"EastMojo",url:"https://eastmojo.com/manipur/2026/10/10/at-least-11-killed-several-injured-in-fresh-manipur-violence/"},
+{id:3,date:"2026-04-07",region:"North East",place:"Tronglaobi, Bishnupur, Manipur",lat:24.5,lon:93.76,type:"Militant attack",sev:2,title:"Projectile attack killed two children; mother critically injured",src:"Eurasia Review",url:"https://www.eurasiareview.com/21042026-india-renewed-violence-in-manipur-analysis/"},
+{id:4,date:"2026-04-07",region:"North East",place:"Bishnupur, Manipur",lat:24.63,lon:93.77,type:"Civil unrest",sev:3,title:"At least three killed as paramilitary fired on protesters",src:"Al Jazeera",url:"https://www.aljazeera.com/features/2026/4/22/why-is-indias-manipur-burning-for-three-years"},
+{id:5,date:"2026-01-03",region:"Central & East",place:"Konta, Sukma, Chhattisgarh",lat:17.8,lon:81.4,type:"Encounter",sev:5,title:"Twelve Maoists killed in encounter; weapons recovered",src:"All India Radio",url:"https://www.newsonair.gov.in/two-maoists-killed-in-encounter-with-security-forces-in-chhattisgarhs-bijapur"},
+{id:6,date:"2026-01-18",region:"Central & East",place:"National Park area, Bijapur, Chhattisgarh",lat:18.9,lon:80.6,type:"Encounter",sev:4,title:"Six Maoists killed, including a divisional committee member",src:"All India Radio",url:"https://www.newsonair.gov.in/chhattisgarh-six-maoists-killed-in-encounter-with-security-forces-in-bijapur"},
+{id:7,date:"2026-01-29",region:"Central & East",place:"South Bijapur, Chhattisgarh",lat:18.5,lon:80.9,type:"Encounter",sev:2,title:"Two Maoists killed after ambush on DRG search team",src:"All India Radio",url:"https://www.newsonair.gov.in/two-maoists-killed-in-encounter-with-security-forces-in-chhattisgarh"},
+{id:8,date:"2026-02-04",region:"Jammu & Kashmir",place:"Ramnagar-Basantgarh, Udhampur",lat:32.95,lon:75.3,type:"Encounter",sev:2,title:"Two Jaish militants killed in cave after 20-hour operation",src:"All India Radio",url:"https://www.newsonair.gov.in/jk-two-pak-terrorists-including-top-jem-commander-killed-in-encounter"},
+{id:9,date:"2026-09-01",region:"Jammu & Kashmir",place:"Korag, Yousmarg, Budgam",lat:33.8,lon:74.65,type:"Encounter",sev:2,title:"Lashkar commander killed in Operation Korag (date approximate)",src:"Terrorism Watch",url:"https://www.terrorismwatch.org/2026/09/lashkar-terrorist-gunned-down-during.html"}
+];
+</script>
+<script>
+var $ = function (id) { return document.getElementById(id); };
+
+var TYPE_VAR = {
+  "Encounter": "--hot",
+  "Border incident": "--c2",
+  "Insurgent violence": "--c3",
+  "Militant attack": "--c4",
+  "Civil unrest": "--mute"
+};
+
+/* ---------- map projection: lon/lat to the 580 x 640 box ---------- */
+var K = 20, COS = Math.cos(21 * Math.PI / 180);
+function X(lon) { return (lon - 67) * K * COS; }
+function Y(lat) { return (38 - lat) * K; }
+
+var svg = $("map");
+var land = "";
+INDIA_RINGS.forEach(function (r) {
+  for (var i = 0; i < r.length; i += 2) {
+    land += (i ? "L" : "M") + X(r[i]).toFixed(1) + " " + Y(r[i + 1]).toFixed(1);
+  }
+  land += "Z";
+});
+svg.innerHTML =
+  '<path class="land" d="' + land + '"/>' +
+  '<g id="dots"></g>' +
+  '<text id="lbl" class="lbl" x="0" y="0"></text>';
+
+/* ---------- filters, list, stats, detail ---------- */
+var selected = null;
+
+function uniq(k) {
+  return EVENTS.map(function (e) { return e[k]; })
+    .filter(function (v, i, a) { return a.indexOf(v) === i; }).sort();
+}
+function fillSelect(sel, label, vals) {
+  sel.innerHTML = '<option value="">' + label + "</option>" +
+    vals.map(function (v) { return "<option>" + v + "</option>"; }).join("");
+}
+fillSelect($("region"), "All regions", uniq("region"));
+fillSelect($("type"), "All types", uniq("type"));
+
+$("legend").innerHTML = Object.keys(TYPE_VAR).map(function (t) {
+  return '<span><i style="background:var(' + TYPE_VAR[t] + ')"></i>' + t + "</span>";
+}).join("");
+
+function filtered() {
+  var q = $("q").value.toLowerCase(), r = $("region").value,
+      t = $("type").value, s = +$("sev").value;
+  return EVENTS.filter(function (e) {
+    return (!r || e.region === r) && (!t || e.type === t) && e.sev >= s &&
+      (!q || (e.title + e.place + e.region).toLowerCase().indexOf(q) > -1);
+  }).sort(function (a, b) { return b.date.localeCompare(a.date); });
+}
+
+function render() {
+  var ev = filtered();
+  if (selected && !ev.some(function (e) { return e.id === selected; })) selected = null;
+
+  $("stats").innerHTML = [
+    ["Incidents", ev.length],
+    ["Regions", new Set(ev.map(function (e) { return e.region; })).size],
+    ["High severity (4+)", ev.filter(function (e) { return e.sev >= 4; }).length]
+  ].map(function (s) {
+    return '<div class="stat"><b>' + s[1] + "</b><span>" + s[0] + "</span></div>";
+  }).join("");
+
+  var dots = "", lbl = "";
+  ev.forEach(function (e) {
+    var x = X(e.lon).toFixed(1), y = Y(e.lat).toFixed(1), r = 4 + e.sev * 1.8,
+        col = "var(" + TYPE_VAR[e.type] + ")", sel = e.id === selected;
+    if (e.sev >= 4) dots += '<circle class="pulse" cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="1.5"/>';
+    dots += '<circle class="dot" tabindex="0" role="button" aria-label="' + e.place + ": " + e.title +
+      '" data-id="' + e.id + '" cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + col +
+      '" fill-opacity=".7" stroke="' + (sel ? "var(--ink)" : col) + '" stroke-width="' + (sel ? 2.5 : 1) + '"><title>' + e.place + "</title></circle>";
+    if (sel) lbl = { x: +x + r + 6, y: +y + 4, t: e.place };
+  });
+  $("dots").innerHTML = dots;
+  var L = $("lbl");
+  if (lbl) { L.setAttribute("x", lbl.x); L.setAttribute("y", lbl.y); L.textContent = lbl.t; }
+  else L.textContent = "";
+
+  $("list").innerHTML = ev.length ? ev.map(function (e) {
+    return '<button class="ev" data-id="' + e.id + '" aria-pressed="' + (e.id === selected) + '">' +
+      '<h3><span class="tag" style="background:var(' + TYPE_VAR[e.type] + ')"></span>' + e.title + "</h3>" +
+      "<small>" + e.place + ", " + e.region + " · " + e.date + " · severity " + e.sev + "</small></button>";
+  }).join("") : '<div class="empty">No incidents match these filters. Clear a filter to see more.</div>';
+
+  var d = EVENTS.filter(function (e) { return e.id === selected; })[0];
+  $("detail").innerHTML = d
+    ? "<h2>" + d.title + "</h2><div>" + d.place + ", " + d.region + "</div>" +
+      '<div style="color:var(--mute)">' + d.date + " · " + d.type + " · severity " + d.sev + " of 5 · " +
+      (d.url ? '<a href="' + d.url + '" target="_blank" rel="noopener noreferrer">' + d.src + "</a>" : d.src) + "</div>"
+    : '<span class="empty">Select an incident on the map or list to see details.</span>';
+}
+
+function pick(el) {
+  var n = el && el.getAttribute && el.getAttribute("data-id");
+  if (n) { selected = +n; render(); }
+}
+svg.addEventListener("click", function (e) { pick(e.target); });
+svg.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(e.target); }
+});
+$("list").addEventListener("click", function (e) { pick(e.target.closest(".ev")); });
+["q", "region", "type", "sev"].forEach(function (id) { $(id).addEventListener("input", render); });
+$("reset").addEventListener("click", function () {
+  $("q").value = ""; $("region").value = ""; $("type").value = ""; $("sev").value = "1"; render();
+});
+
+render();
+</script>
+</body>
+</html>
